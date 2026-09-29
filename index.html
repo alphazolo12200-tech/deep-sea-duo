@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deep Sea Duo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg1:#bfeaff;--bg2:#0b2545;--ink:#0b2545;--card:#ffffffee;--kid:#ff7a59;--grown:#1b7f9e;--gold:#ffc93c;--ok:#12a36b;--bad:#d64545;--line:#0b254522}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#eaf6ff;--card:#0e2a4fee;--line:#ffffff30;--bg1:#12386b}}
+:root[data-theme="dark"]{--ink:#eaf6ff;--card:#0e2a4fee;--line:#ffffff30;--bg1:#12386b}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*:before,*:after{box-sizing:inherit}
+body{margin:0;min-height:100vh;font-family:Fredoka,"Trebuchet MS",system-ui,sans-serif;color:var(--ink);
+background:linear-gradient(var(--bg1),var(--bg2));background-size:100% 400%;background-position:0 0;transition:background-position 1.2s ease;background-color:var(--bg2)}
+main{max-width:640px;margin:0 auto;padding:14px}
+.hud{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.meter{background:var(--card);border-radius:16px;padding:8px 12px;font-weight:600;font-size:14px}
+.bar{height:12px;border-radius:8px;background:var(--line);margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%;width:100%;background:var(--ok);transition:width .5s,background .5s}
+#dep i{background:var(--gold);width:0}
+.stage{height:120px;position:relative;margin-bottom:8px}
+#sub{position:absolute;left:8%;top:10px;width:120px;animation:bob 3s ease-in-out infinite;transition:left .9s ease}
+@keyframes bob{50%{transform:translateY(12px) rotate(2deg)}}
+@media (prefers-reduced-motion:reduce){#sub{animation:none}}
+.card{background:var(--card);border-radius:24px;padding:20px;border:3px solid var(--line)}
+.who{display:inline-block;padding:4px 14px;border-radius:20px;color:#fff;font-weight:700;margin-bottom:10px}
+.who.kid{background:var(--kid)}.who.grown{background:var(--grown)}.who.talk{background:#7a4fd0}
+h1{font-size:34px;margin:0 0 8px}h2{font-size:23px;line-height:1.3;margin:0 0 14px}
+p{line-height:1.5;margin:0 0 12px;max-width:60ch}
+button{font:inherit;font-weight:600;font-size:18px;color:var(--ink);background:#fff;border:3px solid var(--ink);border-radius:16px;padding:12px 16px;width:100%;margin-bottom:10px;cursor:pointer;text-align:left}
+:root[data-theme="dark"] button,@media (prefers-color-scheme:dark){button{background:#163a68}}
+button:focus-visible{outline:4px solid var(--gold);outline-offset:2px}
+button.go{background:var(--gold);color:#0b2545;text-align:center;border-color:#0b2545}
+button.right{background:var(--ok);color:#fff;border-color:var(--ok)}button.wrong{background:var(--bad);color:#fff;border-color:var(--bad)}
+.fact{background:var(--line);border-radius:14px;padding:10px 14px;margin:6px 0 14px}
+.hint{font-size:14px;opacity:.85}
+</style>
+</head>
+<body>
+<main>
+<div class="hud" id="hud" hidden>
+<div class="meter">Oxygen <span id="ox">100</span>%<div class="bar" id="oxb"><i></i></div></div>
+<div class="meter" id="dep">Depth <span id="dn">0</span>/12<div class="bar"><i></i></div></div>
+</div>
+<div class="stage" id="stage" hidden>
+<svg id="sub" viewBox="0 0 120 60" aria-label="Your submarine"><ellipse cx="55" cy="35" rx="45" ry="20" fill="#ffc93c" stroke="#0b2545" stroke-width="3"/><rect x="45" y="8" width="24" height="16" rx="6" fill="#ffc93c" stroke="#0b2545" stroke-width="3"/><circle cx="40" cy="35" r="7" fill="#bfeaff" stroke="#0b2545" stroke-width="3"/><circle cx="62" cy="35" r="7" fill="#bfeaff" stroke="#0b2545" stroke-width="3"/><path d="M100 35l14-10v20z" fill="#ff7a59" stroke="#0b2545" stroke-width="3"/></svg>
+</div>
+<section class="card" id="card"></section>
+</main>
+<script>
+const KID=[
+["How many arms does an octopus have?",["6","8","10"],1,"An octopus also has three hearts!"],
+["Which of these is a mammal?",["Dolphin","Shark","Tuna"],0,"Dolphins breathe air and feed milk to their babies."],
+["What is 7 + 6?",["12","13","14"],1,"Tip: 7 + 3 = 10, then add 3 more."],
+["What do plants need to make their food?",["Sunlight, water and air","Only soil","Moonlight"],0,"This is called photosynthesis."],
+["Which planet is called the Red Planet?",["Venus","Mars","Jupiter"],1,"Mars is red because of rusty iron in its dust."],
+["How many sides does a hexagon have?",["5","6","8"],1,"Honeycomb cells are hexagons."],
+["What is 4 × 5?",["20","25","9"],0,"Count by fives: 5, 10, 15, 20."],
+["What is the opposite of brave?",["Tall","Scared","Happy"],1,"Being brave means acting even when you feel scared."]];
+const GROWN=[
+["Which is the largest ocean?",["Atlantic","Indian","Pacific"],2,"The Pacific covers about a third of Earth's surface."],
+["About what share of Earth's surface is ocean?",["71%","50%","90%"],0,"Most of our planet is water."],
+["What is 15% of 80?",["10","12","15"],1,"10% is 8, and 5% is 4, so 8 + 4 = 12."],
+["Which gas do plants take in for photosynthesis?",["Oxygen","Nitrogen","Carbon dioxide"],2,"They give oxygen back out."],
+["What mainly causes ocean tides?",["Wind","The Moon's gravity","Fish"],1,"The Sun helps too, but the Moon matters most."],
+["Why do we see lightning before we hear thunder?",["Light travels faster than sound","Thunder is farther up","Our eyes are faster than ears"],0,"Count the seconds and divide by 3 for the distance in km."]];
+const TALK=[
+["Kid teaches!","Grown-up: ask your explorer to teach you ONE thing they learned this week. Listen with no correcting."],
+["Invent a creature!","Together, make up a deep-sea animal. Give it a name, a superpower and a snack."],
+["Grown-up story!","Grown-up: tell about something you were bad at as a kid, and how you got better."]];
+const sh=a=>a.map(x=>[Math.random(),x]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+let q,i,ox,dp,ok;
+const $=id=>document.getElementById(id),card=$("card");
+function start(){
+const k=sh(KID).slice(0,6),g=sh(GROWN),t=sh(TALK);q=[];
+for(let n=0;n<6;n++){q.push({w:"kid",d:k[n]});q.push({w:"grown",d:g[n]});if(n%2==1&&t.length)q.push({w:"talk",d:t.shift()})}
+i=0;ox=100;dp=0;ok=0;$("hud").hidden=false;$("stage").hidden=false;hud();round()}
+function hud(){$("ox").textContent=ox;$("dn").textContent=dp;
+const b=$("oxb").firstElementChild;b.style.width=ox+"%";b.style.background=ox>50?"var(--ok)":ox>25?"var(--gold)":"var(--bad)";
+$("dep").querySelector("i").style.width=dp/12*100+"%";
+document.body.style.backgroundPosition="0 "+(dp/12*100)+"%";
+$("sub").style.left=(8+dp*6)+"%"}
+function round(){
+if(i>=q.length)return end(true);
+const r=q[i];
+if(r.w=="talk"){card.innerHTML=`<span class="who talk">Talk time</span><h2>${r.d[0]}</h2><p>${r.d[1]}</p><p class="hint">Bonus: +10 oxygen for the team.</p><button class="go" id="nx">We did it!</button>`;
+$("nx").onclick=()=>{ox=Math.min(100,ox+10);i++;hud();round()};return}
+const kid=r.w=="kid",opts=sh(r.d[1].map((t,j)=>({t,c:j==r.d[2]})));
+card.innerHTML=`<span class="who ${r.w}">${kid?"Explorer's turn":"Captain's turn"}</span>
+<p class="hint">${kid?"Grown-up: read it aloud, then let your explorer choose.":"Explorer: read it aloud. Grown-up answers!"}</p>
+<h2>${r.d[0]}</h2><div id="opts"></div><div id="fb"></div>`;
+opts.forEach(o=>{const b=document.createElement("button");b.textContent=o.t;b.onclick=()=>pick(b,o,opts,r);$("opts").appendChild(b)})}
+function pick(b,o,opts,r){
+const bs=[...document.querySelectorAll("#opts button")];bs.forEach((x,j)=>{x.disabled=true;if(opts[j].c)x.classList.add("right")});
+if(o.c){dp++;ok++;ox=Math.min(100,ox+5)}else{b.classList.add("wrong");ox-=15}
+hud();
+$("fb").innerHTML=`<div class="fact"><b>${o.c?"Nice! Down we go.":"Oops, we lost some air."}</b><br>${r.d[3]}</div><button class="go" id="nx">${ox<=0?"Surface":"Next"}</button>`;
+$("nx").onclick=()=>{i++;ox<=0?end(false):round()};$("nx").focus()}
+function end(win){
+card.innerHTML=win
+?`<h1>Treasure found!</h1><p>You reached the bottom with ${ox}% oxygen and got ${ok} of 12 right. Every wrong answer taught you something, so that counts too.</p><p><b>Family challenge:</b> pick your favorite fact from today and explain it to someone at dinner.</p><button class="go" id="again">Dive again</button>`
+:`<h1>Time to surface!</h1><p>The oxygen ran out at depth ${dp}, but you learned ${i} new facts on the way. Try again with a different order of questions.</p><button class="go" id="again">Dive again</button>`;
+$("again").onclick=start}
+card.innerHTML=`<h1>Deep Sea Duo</h1><p>A team game for one grown-up and one explorer, sharing one screen. Take turns answering. Right answers dive deeper, wrong ones use up oxygen, and Talk Time cards refill it. Reach the treasure together.</p><button class="go" id="s">Start diving</button>`;
+$("s").onclick=start;
+</script>
+</body>
+</html>
